@@ -56,19 +56,24 @@ public class MapMeshGenerator : MonoBehaviour
                         float px = prevNode[0].AsFloat;
                         float pz = prevNode[1].AsFloat;
 
-                        x /= 6;
-                        z /= 52;
-                        px /= 6;
-                        pz /= 52;
+                        string sx = x.ToString().Substring(6);
+                        string sz = z.ToString().Substring(6);
+                        string spx = px.ToString().Substring(6);
+                        string spz = pz.ToString().Substring(6);
 
-                        Debug.Log(String.Format("{0}, {1}, {2}, {3}", x, z, px, pz));
+                        x = float.Parse(sx);
+                        z = float.Parse(sz);
+                        px = float.Parse(spx);
+                        pz = float.Parse(spz);
+
+                        // Debug.Log(String.Format("{0}, {1}, {2}, {3}", x, z, px, pz));
 
                         v3List.Add(new Vector3(px, 0, pz));
-                        v3List.Add(new Vector3(px, 1, pz));
+                        v3List.Add(new Vector3(px, 40, pz));
                         v3List.Add(new Vector3(x, 0, z));
 
                         v3List.Add(new Vector3(px, 0, pz));
-                        v3List.Add(new Vector3(x, 1, z));
+                        v3List.Add(new Vector3(x, 40, z));
                         v3List.Add(new Vector3(x, 0, z));
                     }
 
@@ -87,7 +92,7 @@ public class MapMeshGenerator : MonoBehaviour
 
         foreach (Vector3 vert in mesh.vertices)
         {
-            Debug.Log(vert);
+            // Debug.Log(vert);
         }
 
         Debug.Log("Made mesh data");
