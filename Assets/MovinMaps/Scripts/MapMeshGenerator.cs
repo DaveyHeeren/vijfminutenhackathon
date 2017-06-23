@@ -33,6 +33,44 @@ public class MapMeshGenerator : MonoBehaviour
         //mesh.triangles = tris;
     }
 
+    private void connectCoords(List<Vector3> v3List, JSONArray prevNode, JSONArray coords)
+    {
+        float x = coords[0].AsFloat;
+        float z = coords[1].AsFloat;
+        float px = prevNode[0].AsFloat;
+        float pz = prevNode[1].AsFloat;
+
+        //string sx = x.ToString().Substring(5);
+        //string sz = z.ToString().Substring(6);
+        //string spx = px.ToString().Substring(5);
+        //string spz = pz.ToString().Substring(6);
+
+        //x = float.Parse(sx);
+        //z = float.Parse(sz) * 10;
+        //px = float.Parse(spx);
+        //pz = float.Parse(spz) * 10;
+
+        z -= 52.50724f;
+        x -= 6.086264f;
+        pz -= 52.50724f;
+        px -= 6.086264f;
+
+        x *= 1000000f;
+        z *= 1000000f;
+        px *= 1000000f;
+        pz *= 1000000f;
+
+        Debug.Log(String.Format("{0}, {1}, {2}, {3}", x, z, px, pz));
+
+        v3List.Add(new Vector3(px, 0, pz));
+        v3List.Add(new Vector3(px, 40, pz));
+        v3List.Add(new Vector3(x, 0, z));
+
+        v3List.Add(new Vector3(x, 0, z));
+        v3List.Add(new Vector3(px, 40, pz));
+        v3List.Add(new Vector3(x, 40, z));
+    }
+
     private void MakeMeshData(JSONNode building)
     {
         mesh.Clear();
@@ -42,44 +80,40 @@ public class MapMeshGenerator : MonoBehaviour
         {
             JSONObject entity = node.AsObject;
             JSONObject properties = entity["properties"].AsObject;
+
             if (properties["baseType"].Equals("Room"))
             {
+                JSONArray firstNode = null;
+
                 JSONArray coordinates = entity["geometry"].AsObject["coordinates"].AsArray[0].AsArray;
                 JSONArray prevNode = null;
                 foreach (JSONNode cnode in coordinates)
                 {
                     JSONArray coords = cnode.AsArray;
+
+                    if (firstNode == null)
+                    {
+                        firstNode = coords;
+                    }
+
                     if (prevNode != null)
                     {
-                        float x = coords[0].AsFloat;
-                        float z = coords[1].AsFloat;
-                        float px = prevNode[0].AsFloat;
-                        float pz = prevNode[1].AsFloat;
-
-                        string sx = x.ToString().Substring(6);
-                        string sz = z.ToString().Substring(6);
-                        string spx = px.ToString().Substring(6);
-                        string spz = pz.ToString().Substring(6);
-
-                        x = float.Parse(sx);
-                        z = float.Parse(sz);
-                        px = float.Parse(spx);
-                        pz = float.Parse(spz);
-
-                        // Debug.Log(String.Format("{0}, {1}, {2}, {3}", x, z, px, pz));
-
-                        v3List.Add(new Vector3(px, 0, pz));
-                        v3List.Add(new Vector3(px, 40, pz));
-                        v3List.Add(new Vector3(x, 0, z));
-
-                        v3List.Add(new Vector3(px, 0, pz));
-                        v3List.Add(new Vector3(x, 40, z));
-                        v3List.Add(new Vector3(x, 0, z));
+                        this.connectCoords(v3List, prevNode, coords);
                     }
 
                     prevNode = coords;
                 }
+
+                if (firstNode != null && prevNode != null)
+                {
+                    this.connectCoords(v3List, prevNode, firstNode);
+                }
             }
+        }
+
+        for (int i = v3List.Count - 1; i >= 0; i--)
+        {
+            v3List.Add(v3List[i]);
         }
 
         mesh.vertices = v3List.ToArray();
