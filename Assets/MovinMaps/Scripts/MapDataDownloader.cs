@@ -2,10 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using SimpleJSON;
 
 public class MapDataDownloader : MonoBehaviour
 {
-    public delegate void MapDataReceiver(MovinMap map);
+    public delegate void MapDataReceiver(JSONNode node);
 
     [SerializeField]
     public string MapURL = "https://kasiusbananavijfminutenkak.movin.io/data/maps/getmap?mapid=579226d5bcab1ba605c5e426&apikey=594cbb69063c404b2f24d952&includebuildings=true&includeentities=true";
@@ -27,8 +28,10 @@ public class MapDataDownloader : MonoBehaviour
         WWW www = new WWW(this.MapURL);
         yield return www;
 
-        SimpleJSON.JSONNode json = SimpleJSON.JSON.Parse(www.text);
-        receiver(JsonUtility.FromJson<GetMapResponse>(www.text).map);
+        JSONNode json = JSON.Parse(www.text);
+        JSONArray buildings = json["map"].AsObject["buildings"].AsArray;
+        JSONObject building = buildings[0].AsObject;
+        receiver(building);
     }
 }
 

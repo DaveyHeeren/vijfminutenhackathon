@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using SimpleJSON;
 
 public class MapMeshGenerator : MonoBehaviour
 {
@@ -27,33 +28,66 @@ public class MapMeshGenerator : MonoBehaviour
     private void CreateMesh()
     {
         Debug.Log("Creating mesh");
-        mesh.Clear();
-        mesh.vertices = vertices;
-        mesh.triangles = tris;
+        //mesh.Clear();
+        //mesh.vertices = vertices;
+        //mesh.triangles = tris;
     }
 
-    private void MakeMeshData(MovinBuilding building)
+    private void MakeMeshData(JSONNode building)
     {
+        mesh.Clear();
         List<Vector3> v3List = new List<Vector3>();
 
-        foreach (MovinEntity entity in building.entities)
+        foreach (JSONNode node in building["entities"].AsArray)
         {
-            if (entity.geometry != null && entity.properties.baseType == "Room")
+            JSONObject entity = node.AsObject;
+            JSONObject properties = entity["properties"].AsObject;
+            if (properties["baseType"].Equals("Room"))
             {
-                Debug.Log(entity.geometry.type);
-                Debug.Log(entity.geometry.coordinates);
-                //foreach (float[] coordinate in entity.geometry.coordinates[0])
-                //{
-                //    v3List.Add(new Vector3(coordinate[0], 0, coordinate[1]));
-                //}
+                JSONArray coordinates = entity["geometry"].AsObject["coordinates"].AsArray[0].AsArray;
+                JSONArray prevNode = null;
+                foreach (JSONNode cnode in coordinates)
+                {
+                    JSONArray coords = cnode.AsArray;
+                    if (prevNode != null)
+                    {
+                        float x = coords[0].AsFloat;
+                        float z = coords[1].AsFloat;
+                        float px = prevNode[0].AsFloat;
+                        float pz = prevNode[1].AsFloat;
+
+                        x /= 6;
+                        z /= 52;
+                        px /= 6;
+                        pz /= 52;
+
+                        Debug.Log(String.Format("{0}, {1}, {2}, {3}", x, z, px, pz));
+
+                        v3List.Add(new Vector3(px, 0, pz));
+                        v3List.Add(new Vector3(px, 1, pz));
+                        v3List.Add(new Vector3(x, 0, z));
+
+                        v3List.Add(new Vector3(px, 0, pz));
+                        v3List.Add(new Vector3(x, 1, z));
+                        v3List.Add(new Vector3(x, 0, z));
+                    }
+
+                    prevNode = coords;
+                }
             }
         }
 
-        this.tris = new int[v3List.Count];
-        this.vertices = v3List.ToArray();
-        for (int i = 0; i < this.vertices.Length; i++)
+        mesh.vertices = v3List.ToArray();
+        List<int> trisList = new List<int>();
+        for (int i = 0; i < v3List.Count; i++)
         {
-            tris[i] = i;
+            trisList.Add(i);
+        }
+        mesh.triangles = trisList.ToArray();
+
+        foreach (Vector3 vert in mesh.vertices)
+        {
+            Debug.Log(vert);
         }
 
         Debug.Log("Made mesh data");
@@ -65,11 +99,9 @@ public class MapMeshGenerator : MonoBehaviour
 
     }
 
-    void DataReceiver(MovinMap map)
+    void DataReceiver(JSONNode building)
     {
-        Debug.Log(map.buildings[0]._id);
-
-        MakeMeshData(map.buildings[0]);
+        MakeMeshData(building);
         CreateMesh();
     }
 }
